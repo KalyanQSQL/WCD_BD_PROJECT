@@ -1,0 +1,9 @@
+{
+	"name": "adf-bdprojectDONTDELETE",
+	"location": "canadacentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "36851ec0-f02f-4b68-8040-8c735a12f961",
+		"tenantId": "77b70be3-d89a-4997-8bb3-40189e247ec6"
+	}
+}

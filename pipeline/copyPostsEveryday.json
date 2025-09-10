@@ -1,0 +1,137 @@
+{
+	"name": "copyPostsEveryday",
+	"properties": {
+		"description": "copying postTypes and users from RDS-postgres-DB -once a week ",
+		"activities": [
+			{
+				"name": "Copy Posts",
+				"description": "copy posts from external azure blob storage",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "delete posts",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.parquet",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_parquet_posts_blob",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_rds_load_posts_to_my_blob",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "delete posts",
+				"description": "delete posts from post folder",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "ds_rds_load_posts_to_my_blob",
+						"type": "DatasetReference"
+					},
+					"logStorageSettings": {
+						"linkedServiceName": {
+							"referenceName": "ls_my_blob",
+							"type": "LinkedServiceReference"
+						},
+						"path": "bd-project/Landing"
+					},
+					"enableLogging": true,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Run ML Analysis",
+				"description": "run ml model on posts files",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Copy Posts",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/kalyanqsql@gmail.com/Project_Model_Deployment_RF"
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_db_ml_posts",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-09-06T20:45:19Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
